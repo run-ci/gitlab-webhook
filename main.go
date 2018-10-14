@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
@@ -37,9 +38,24 @@ func handle(wr http.ResponseWriter, req *http.Request) {
 			"error": err,
 		}).Error("error reading request body")
 
+		wr.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var ev PushEvent
+	err = json.Unmarshal(body, &ev)
+	if err != nil {
+		logger.CloneWith(map[string]interface{}{
+			"error": err,
+		}).Error("error unmarshaling request body")
+
 		wr.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	logger.Debugf("got request body: %s", body)
+	logger.Debugf("got event: %+v", ev)
+
+	// generate pipeline JSON
+
+	// send event on queue
 }
