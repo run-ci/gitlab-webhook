@@ -10,7 +10,7 @@ description: |
 
 image: golang:1.11-stretch
 
-mount: /go/src/gitlab.com/run-ci/gitlab-webhook
+mount: /go/src/gitlab.com/run-ci/webhooks/gitlab
 
 command: go build -v
 

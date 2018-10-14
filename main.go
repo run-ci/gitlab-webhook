@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"gitlab.com/run-ci/gitlab-webhook/log"
+	"gitlab.com/run-ci/webhooks/gitlab/log"
 )
 
 var logger *log.Logger
@@ -13,11 +13,11 @@ var logger *log.Logger
 func init() {
 	log.SetLevelFromEnv("WEBHOOK_LOG_LEVEL")
 
-	logger = log.New("gitlab-webhook/main")
+	logger = log.New("webhooks/gitlab/main")
 }
 
 func main() {
-	logger.Info("booting gitlab-webhook")
+	logger.Info("booting gitlab webhook")
 
 	http.HandleFunc("/", handle)
 
