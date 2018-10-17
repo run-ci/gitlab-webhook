@@ -2,10 +2,16 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
+
+	"github.com/google/uuid"
 
 	"gitlab.com/run-ci/webhooks/gitlab/log"
+
+	git "gopkg.in/src-d/go-git.v4"
 )
 
 var logger *log.Logger
@@ -55,7 +61,30 @@ func handle(wr http.ResponseWriter, req *http.Request) {
 
 	logger.Debugf("got event: %+v", ev)
 
-	// generate pipeline JSON
+	basedir, err := os.Getwd()
+	if err != nil {
+		logger.CloneWith(map[string]interface{}{
+			"error": err,
+			"event": ev,
+		}).Error("error getting working directory")
+	}
+
+	clonedir := fmt.Sprintf("%v/%v", basedir, uuid.New())
+
+	_, err = git.PlainClone(clonedir, false, &git.CloneOptions{
+		URL:      ev.Repository.GitHTTPURL,
+		Progress: os.Stdout,
+	})
+	if err != nil {
+		logger.CloneWith(map[string]interface{}{
+			"error": err,
+			"event": ev,
+		}).Error("unable to clone git repository")
+	}
+
+	// read pipeline files
+
+	// generate pipelines
 
 	// send event on queue
 }
