@@ -11,6 +11,8 @@ import (
 	"github.com/google/uuid"
 
 	"gitlab.com/run-ci/webhooks/gitlab/log"
+	"gitlab.com/run-ci/webhooks/gitlab/queue"
+	"gitlab.com/run-ci/webhooks/pkg"
 
 	git "gopkg.in/src-d/go-git.v4"
 	yaml "gopkg.in/yaml.v2"
@@ -18,6 +20,7 @@ import (
 
 var logger *log.Logger
 var clonesdir string
+var q pkg.PipelineSender
 
 func init() {
 	log.SetLevelFromEnv("WEBHOOK_LOG_LEVEL")
@@ -34,6 +37,8 @@ func init() {
 			}).Fatal("error getting current working directory for WEBHOOK_CLONES_DIR")
 		}
 	}
+
+	q = queue.NewEchoQueue()
 }
 
 func main() {
@@ -147,7 +152,7 @@ func handle(wr http.ResponseWriter, req *http.Request) {
 
 		logger.Debug("loading pipeline")
 
-		var p Pipeline
+		var p pkg.Pipeline
 		err = yaml.UnmarshalStrict(buf, &p)
 		if err != nil {
 			logger = logger.CloneWith(map[string]interface{}{
@@ -165,23 +170,17 @@ func handle(wr http.ResponseWriter, req *http.Request) {
 			"pipeline": p,
 		})
 		logger.Debug("sending pipeline")
+
+		err = q.SendPipeline(p)
+		if err != nil {
+			logger.CloneWith(map[string]interface{}{
+				"error": err,
+			}).Error("unable to send pipeline")
+
+			continue
+		}
 	}
-}
 
-type Pipeline struct {
-	Name   string `json:"name"`
-	Remote string `json:"remote"`
-	Branch string `json:"branch" yaml:"branch"`
-	Tag    string `json:"tag" yaml:"tag"`
-	Steps  []Step `json:"steps" yaml:"steps"`
-}
-
-type Step struct {
-	Name  string `json:"name" yaml:"name"`
-	Tasks []Task `json:"task" yaml:"tasks"`
-}
-
-type Task struct {
-	Name      string                 `json:"name" yaml:"name"`
-	Arguments map[string]interface{} `yaml:"arguments"`
+	wr.WriteHeader(http.StatusNoContent)
+	return
 }
