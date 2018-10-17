@@ -6,12 +6,14 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/google/uuid"
 
 	"gitlab.com/run-ci/webhooks/gitlab/log"
 
 	git "gopkg.in/src-d/go-git.v4"
+	yaml "gopkg.in/yaml.v2"
 )
 
 var logger *log.Logger
@@ -93,11 +95,93 @@ func handle(wr http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		logger.CloneWith(map[string]interface{}{
 			"error": err,
-			"event": ev,
 		}).Error("unable to clone git repository")
+
+		wr.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
-	// generate pipelines
+	pipelinesdir := fmt.Sprintf("%v/pipelines", clonedir)
+	finfos, err := ioutil.ReadDir(pipelinesdir)
+	if err != nil {
+		logger.CloneWith(map[string]interface{}{
+			"error": err,
+			"dir":   pipelinesdir,
+		}).Error("unable to list directory")
 
-	// send event on queue
+		wr.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	for _, finfo := range finfos {
+		// The file name corresponds to the pipeline name.
+		name := strings.Split(finfo.Name(), ".")[0]
+
+		logger := logger.CloneWith(map[string]interface{}{
+			"pipeline_name": name,
+		})
+
+		logger.Debug("processing pipeline")
+
+		logger.Debug("opening pipeline file")
+
+		f, err := os.Open(fmt.Sprintf("%v/%v", pipelinesdir, finfo.Name()))
+		if err != nil {
+			logger.CloneWith(map[string]interface{}{
+				"error": err,
+			}).Error("unable to open pipeline file")
+
+			continue
+		}
+
+		logger.Debug("reading pipeline file")
+
+		buf, err := ioutil.ReadAll(f)
+		if err != nil {
+			logger.CloneWith(map[string]interface{}{
+				"error": err,
+			}).Error("unable to read pipeline file")
+
+			continue
+		}
+
+		logger.Debug("loading pipeline")
+
+		var p Pipeline
+		err = yaml.UnmarshalStrict(buf, &p)
+		if err != nil {
+			logger = logger.CloneWith(map[string]interface{}{
+				"error": err,
+			})
+			logger.Error("unable to unmarshal pipeline")
+
+			continue
+		}
+
+		p.Name = name
+		p.Remote = ev.Repository.GitHTTPURL
+
+		logger = logger.CloneWith(map[string]interface{}{
+			"pipeline": p,
+		})
+		logger.Debug("sending pipeline")
+	}
+}
+
+type Pipeline struct {
+	Name   string `json:"name"`
+	Remote string `json:"remote"`
+	Branch string `json:"branch" yaml:"branch"`
+	Tag    string `json:"tag" yaml:"tag"`
+	Steps  []Step `json:"steps" yaml:"steps"`
+}
+
+type Step struct {
+	Name  string `json:"name" yaml:"name"`
+	Tasks []Task `json:"task" yaml:"tasks"`
+}
+
+type Task struct {
+	Name      string                 `json:"name" yaml:"name"`
+	Arguments map[string]interface{} `yaml:"arguments"`
 }
