@@ -15,11 +15,23 @@ import (
 )
 
 var logger *log.Logger
+var clonesdir string
 
 func init() {
 	log.SetLevelFromEnv("WEBHOOK_LOG_LEVEL")
 
 	logger = log.New("webhooks/gitlab/main")
+
+	clonesdir = os.Getenv("WEBHOOK_CLONES_DIR")
+	if clonesdir == "" {
+		var err error
+		clonesdir, err = os.Getwd()
+		if err != nil {
+			logger.CloneWith(map[string]interface{}{
+				"error": err,
+			}).Fatal("error getting current working directory for WEBHOOK_CLONES_DIR")
+		}
+	}
 }
 
 func main() {
@@ -48,6 +60,8 @@ func handle(wr http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	logger.Debug("unmarshaling request body")
+
 	var ev PushEvent
 	err = json.Unmarshal(body, &ev)
 	if err != nil {
@@ -59,17 +73,18 @@ func handle(wr http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	logger.Debugf("got event: %+v", ev)
+	logger = logger.CloneWith(map[string]interface{}{
+		"event": ev,
+	})
+	logger.Debug("got event")
 
-	basedir, err := os.Getwd()
-	if err != nil {
-		logger.CloneWith(map[string]interface{}{
-			"error": err,
-			"event": ev,
-		}).Error("error getting working directory")
-	}
+	clonedir := fmt.Sprintf("%v/%v", clonesdir, uuid.New())
 
-	clonedir := fmt.Sprintf("%v/%v", basedir, uuid.New())
+	logger = logger.CloneWith(map[string]interface{}{
+		"clonedir": clonedir,
+	})
+
+	logger.Debug("cloning repo")
 
 	_, err = git.PlainClone(clonedir, false, &git.CloneOptions{
 		URL:      ev.Repository.GitHTTPURL,
@@ -81,8 +96,6 @@ func handle(wr http.ResponseWriter, req *http.Request) {
 			"event": ev,
 		}).Error("unable to clone git repository")
 	}
-
-	// read pipeline files
 
 	// generate pipelines
 

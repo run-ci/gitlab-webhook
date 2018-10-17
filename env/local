@@ -1,0 +1,2 @@
+export WEBHOOK_LOG_LEVEL=debug
+export WEBHOOK_CLONES_DIR=$(pwd)/clones
