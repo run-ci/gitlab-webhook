@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"gitlab.com/run-ci/webhooks/pkg"
+	"gitlab.com/run-ci/webhooks/pkg.git"
 )
 
 type EchoQueue struct {
