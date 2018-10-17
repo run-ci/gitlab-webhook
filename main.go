@@ -12,7 +12,7 @@ import (
 
 	"gitlab.com/run-ci/webhooks/gitlab/log"
 	"gitlab.com/run-ci/webhooks/gitlab/queue"
-	"gitlab.com/run-ci/webhooks/pkg"
+	pkg "gitlab.com/run-ci/webhooks/pkg.git"
 
 	git "gopkg.in/src-d/go-git.v4"
 	yaml "gopkg.in/yaml.v2"
