@@ -12,7 +12,6 @@ import (
 
 	"github.com/juicemia/log"
 	"gitlab.com/run-ci/webhooks/gitlab/queue"
-	pkg "gitlab.com/run-ci/webhooks/pkg.git"
 
 	git "gopkg.in/src-d/go-git.v4"
 	yaml "gopkg.in/yaml.v2"
@@ -20,7 +19,11 @@ import (
 
 var logger *log.Logger
 var clonesdir string
-var q pkg.PipelineSender
+var q PipelineSender
+
+type PipelineSender interface {
+	SendPipeline(queue.Event) error
+}
 
 func init() {
 	log.SetLevelFromEnv("WEBHOOK_LOG_LEVEL")
@@ -152,7 +155,7 @@ func handle(wr http.ResponseWriter, req *http.Request) {
 
 		logger.Debug("loading pipeline")
 
-		var p pkg.Pipeline
+		var p queue.Event
 		err = yaml.UnmarshalStrict(buf, &p)
 		if err != nil {
 			logger = logger.CloneWith(map[string]interface{}{

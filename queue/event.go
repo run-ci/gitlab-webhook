@@ -1,6 +1,6 @@
-package pkg
+package queue
 
-type Pipeline struct {
+type Event struct {
 	Name   string `json:"name"`
 	Remote string `json:"remote"`
 	Branch string `json:"branch" yaml:"branch"`
@@ -16,8 +16,4 @@ type Step struct {
 type Task struct {
 	Name      string                 `json:"name" yaml:"name"`
 	Arguments map[string]interface{} `yaml:"arguments"`
-}
-
-type PipelineSender interface {
-	SendPipeline(Pipeline) error
 }

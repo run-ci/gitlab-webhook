@@ -3,8 +3,6 @@ package queue
 import (
 	"fmt"
 	"os"
-
-	"gitlab.com/run-ci/webhooks/pkg.git"
 )
 
 type EchoQueue struct {
@@ -17,7 +15,7 @@ func NewEchoQueue() *EchoQueue {
 	}
 }
 
-func (q *EchoQueue) SendPipeline(p pkg.Pipeline) error {
-	_, err := fmt.Fprintf(q.f, "%+v", p)
+func (q *EchoQueue) SendPipeline(ev Event) error {
+	_, err := fmt.Fprintf(q.f, "%+v", ev)
 	return err
 }
