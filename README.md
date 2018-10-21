@@ -4,12 +4,6 @@ Used to receive push events from Gitlab to trigger pipeline runs.
 
 ## Developing
 
-### Prerequisites
-
-Make sure you have the following configured in your `.gitconfig`.
-The go tooling needs it to be able to pull the private dependencies
-for this project.
-
 ### Workflow
 
 Build the server:
