@@ -54,6 +54,8 @@ github.com/gogo/protobuf/proto
 github.com/google/uuid
 # github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99
 github.com/jbenet/go-context/io
+# github.com/juicemia/log v0.0.0-20181021142611-9c93a3a71d1a
+github.com/juicemia/log
 # github.com/kevinburke/ssh_config v0.0.0-20180830205328-81db2a75821e
 github.com/kevinburke/ssh_config
 # github.com/konsorten/go-windows-terminal-sequences v0.0.0-20180402223658-b729f2633dfe

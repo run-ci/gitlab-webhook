@@ -10,7 +10,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"gitlab.com/run-ci/webhooks/gitlab/log"
+	"github.com/juicemia/log"
 	"gitlab.com/run-ci/webhooks/gitlab/queue"
 	pkg "gitlab.com/run-ci/webhooks/pkg.git"
 
